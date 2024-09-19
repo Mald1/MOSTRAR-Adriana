@@ -1,0 +1,90 @@
+// prisma/schema.prisma
+
+// Definir a fonte de dados (PostgreSQL) e o gerador Prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // Coloque sua URL de conexão aqui
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Modelo para a tabela "courses"
+model Course {
+  id          Int      @id @default(autoincrement())
+  course_type String   @db.VarChar(45)
+  students    Student[]
+}
+
+// Modelo para a tabela "students"
+model Student {
+  id          Int        @id @default(autoincrement())
+  first_name  String     @db.VarChar(100)
+  last_name   String     @db.VarChar(100)
+  matricula   Int
+  courseId    Int
+  course      Course     @relation(fields: [courseId], references: [id])
+  atribuitions AtribuitionStudent[]
+  meals       MealTypeStudent[]
+}
+
+// Modelo para a tabela "events"
+model Event {
+  id         Int      @id @default(autoincrement())
+  start_date DateTime
+  end_date   DateTime
+  atribuitions AtribuitionStudent[]
+}
+
+// Modelo para a tabela "atribuitions"
+model Atribuition {
+  id         Int      @id @default(autoincrement())
+  start_date DateTime
+  end_date   DateTime
+  students   AtribuitionStudent[]
+}
+
+// Modelo para a tabela "roles"
+model Role {
+  id    Int      @id @default(autoincrement())
+  roles String   @db.VarChar(100)
+  atribuitions AtribuitionStudent[]
+}
+
+// Tabela "atribuitions_has_students" - relacional
+model AtribuitionStudent {
+  atribuitionId Int
+  studentId     Int
+  eventId       Int
+  roleId        Int
+  atribuition   Atribuition @relation(fields: [atribuitionId], references: [id])
+  student       Student     @relation(fields: [studentId], references: [id])
+  event         Event       @relation(fields: [eventId], references: [id])
+  role          Role        @relation(fields: [roleId], references: [id])
+
+  @@id([atribuitionId, studentId])
+  @@index([studentId])
+  @@index([atribuitionId])
+  @@index([eventId])
+  @@index([roleId])
+}
+
+// Modelo para a tabela "meals_type"
+model MealType {
+  id         Int      @id @default(autoincrement())
+  meal_type  String   @db.VarChar(45)
+  students   MealTypeStudent[]
+}
+
+// Tabela "meals_type_has_students" - relacional
+model MealTypeStudent {
+  mealTypeId Int
+  studentId  Int
+  mealType   MealType  @relation(fields: [mealTypeId], references: [id])
+  student    Student   @relation(fields: [studentId], references: [id])
+
+  @@id([mealTypeId, studentId])
+  @@index([studentId])
+  @@index([mealTypeId])
+}
